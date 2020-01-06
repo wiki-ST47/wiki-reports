@@ -5,37 +5,17 @@ from urllib.parse import quote_plus
 from datetime import datetime, timedelta
 import random
 import re
-from basereport import BaseReport, UsesWhoisMixin
+from basereport import BaseReport, UsesWhoisMixin, UsesBlocksMixin
 
 
-class rbesReport(UsesWhoisMixin, BaseReport):
+class rbesReport(UsesBlocksMixin, UsesWhoisMixin, BaseReport):
     page_name = "User:ST47/rangeblocks_expiring_soon"
-
-    def get_blocks(self):
-        return self.homesite.blocks()
-
-    def filter_ip_blocks(self, blocklist):
-        ipblocklist = [x for x in blocklist if 'user' in x and x['userid'] == 0]
-        return ipblocklist
-
-    def filter_range_blocks(self, blocklist):
-        res = [x for x in blocklist if x['rangestart'] != x['rangeend']]
-        return res
-
-    def filter_relevant_blocks(self, blocklist):
-        res = [x for x in blocklist
-               if re.search('proxy|proxies|webhost', x['reason'], flags=re.I)]
-        return res
 
     def gather_data(self):
         site = self.homesite
-        report_data = {}
+        report_data = super().gather_data()
 
-        blockiter = self.get_blocks()
-        blocklist = [x for x in blockiter]
-        ipblocklist = self.filter_ip_blocks(blocklist)
-        blockedranges = self.filter_range_blocks(ipblocklist)
-        coloranges = self.filter_relevant_blocks(blockedranges)
+        coloranges = report_data['coloranges']
 
         enrichedv4coloranges = []
         enrichedv6coloranges = []
@@ -59,12 +39,6 @@ class rbesReport(UsesWhoisMixin, BaseReport):
 
     def get_block_target(self, block):
         return block['user']
-
-    def format_block_reason(self, reason):
-        return reason.replace("{{", "{{tl|")\
-                     .replace("}}", "}}")\
-                     .replace('<!--', '&lt;!--')\
-                     .replace('-->', '--&gt;')
 
     def build_block_links(self, user):
         random.seed(user)

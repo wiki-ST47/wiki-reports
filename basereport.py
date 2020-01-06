@@ -3,6 +3,7 @@ from flare.tools.whoisip import WhoisLookup
 import pyasn
 from urllib.parse import quote_plus
 from datetime import datetime, timedelta
+import ipaddress
 import random
 import re
 
@@ -14,6 +15,60 @@ class UsesWhoisMixin(object):
             'flaredata/asnames.txt',
         )
 
+class UsesBlocksMixin(object):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.ipaddress = ipaddress
+
+    def get_blocks(self):
+        return self.homesite.blocks()
+
+    def filter_ip_blocks(self, blocklist):
+        ipblocklist = [x for x in blocklist if 'user' in x and x['userid'] == 0]
+        self.ipblocklist = ipblocklist
+        return ipblocklist
+
+    def filter_range_blocks(self, blocklist):
+        res = [x for x in blocklist if x['rangestart'] != x['rangeend']]
+        return res
+
+    def filter_relevant_blocks(self, blocklist):
+        res = [x for x in blocklist
+               if re.search('proxy|proxies|webhost', x['reason'], flags=re.I)]
+        return res
+
+    def is_currently_blocked(self, prefix):
+        prefixobj = self.ipaddress.ip_network(prefix)
+        return [x for x in self.ipblocklist
+                if x['rangestart'] and x['rangestart'] != '0.0.0.0'
+                and prefixobj.version == self.ipaddress.ip_network(x['user']).version
+                and prefixobj.subnet_of(self.ipaddress.ip_network(x['user']))]
+
+    def gather_data(self):
+        site = self.homesite
+        report_data = super().gather_data()
+
+        blockiter = self.get_blocks()
+        blocklist = [x for x in blockiter]
+        ipblocklist = self.filter_ip_blocks(blocklist)
+        blockedranges = self.filter_range_blocks(ipblocklist)
+        coloranges = self.filter_relevant_blocks(blockedranges)
+
+        report_data['blocklist'] = blocklist
+        report_data['ipblocklist'] = ipblocklist
+        report_data['blockedranges'] = blockedranges
+        report_data['coloranges'] = coloranges
+
+        return report_data
+
+    def format_block_reason(self, reason):
+        return reason.replace("{{", "{{tl|")\
+                     .replace("}}", "}}")\
+                     .replace('<!--', '&lt;!--')\
+                     .replace('-->', '--&gt;')
+
+
+
 class BaseReport(object):
     homesite_kwargs = {}
 
@@ -21,6 +76,9 @@ class BaseReport(object):
         self.pywikibot = pywikibot
         self.homesite = self.pywikibot.Site(**self.homesite_kwargs)
         self.homesite.login()
+
+    def gather_data(self):
+        return {}
 
     def run(self):
         report_data = self.gather_data()
