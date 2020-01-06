@@ -1,0 +1,16 @@
+certifi==2019.11.28
+chardet==3.0.4
+-e git+https://github.com/austin-taylor/flare.git@1a064f5f9322d025f189c6b5fce82fdae72b5db7#egg=Flare
+-e git+https://github.com/wikimedia/pywikibot.git@master#egg=pywikibot
+idna==2.8
+lxml==4.4.2
+mccabe==0.6.1
+pyasn==1.6.0b1
+pycodestyle==2.5.0
+pydocstyle==4.0.1
+pyflakes==2.1.1
+pylama==7.7.1
+requests==2.22.0
+snowballstemmer==2.0.0
+urllib3==1.25.7
+
