@@ -1,4 +1,3 @@
-from datetime import datetime, timedelta
 import re
 from basereport import (BaseReport, UsesWhoisMixin, UsesBlocksMixin,
                         TwoLevelTableMixin)
@@ -10,7 +9,6 @@ class hbdReport(TwoLevelTableMixin, UsesWhoisMixin, UsesBlocksMixin, BaseReport)
         return '.'.join(block.split('.')[0:3])
 
     def gather_data(self):
-        site = self.homesite
         report_data = super().gather_data()
 
         ipblocklist = report_data['ipblocklist']

@@ -1,7 +1,3 @@
-import pywikibot
-from flare.tools.whoisip import WhoisLookup
-import pyasn
-from urllib.parse import quote_plus
 from datetime import datetime, timedelta
 import random
 import re
@@ -12,7 +8,6 @@ class rbesReport(UsesBlocksMixin, UsesWhoisMixin, BaseReport):
     page_name = "User:ST47/rangeblocks_expiring_soon"
 
     def gather_data(self):
-        site = self.homesite
         report_data = super().gather_data()
 
         coloranges = report_data['coloranges']

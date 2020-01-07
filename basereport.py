@@ -1,11 +1,9 @@
-import pywikibot
-from flare.tools.whoisip import WhoisLookup
-import pyasn
-from urllib.parse import quote_plus
-from datetime import datetime, timedelta
 import ipaddress
-import random
 import re
+
+from flare.tools.whoisip import WhoisLookup
+import pywikibot
+
 
 class UsesWhoisMixin(object):
     def __init__(self, *args, **kwargs):
@@ -48,7 +46,6 @@ class UsesBlocksMixin(object):
                 and prefixobj.subnet_of(self.ipaddress.ip_network(x['user']))]
 
     def gather_data(self):
-        site = self.homesite
         report_data = super().gather_data()
 
         blockiter = self.get_blocks()

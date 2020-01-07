@@ -1,9 +1,4 @@
-import pywikibot
-from flare.tools.whoisip import WhoisLookup
-import pyasn
 from urllib.parse import quote_plus
-from datetime import datetime, timedelta
-import ipaddress
 from basereport import BaseReport, UsesBlocksMixin, TwoLevelTableMixin
 
 class osv6rReport(TwoLevelTableMixin, UsesBlocksMixin, BaseReport):
