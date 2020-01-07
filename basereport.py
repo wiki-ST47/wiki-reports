@@ -68,6 +68,34 @@ class UsesBlocksMixin(object):
                      .replace('-->', '--&gt;')
 
 
+class TwoLevelTableMixin(object):
+    def build_row(self, row):
+        res = ""
+        subrows = self.get_subrow_iterator(row)
+        subrow_count = len(subrows)
+        first_row = True
+        for subrow in subrows:
+            res += "|-\n"
+            for column in self.columns:
+                if 'grouped' in column and first_row:
+                    res += self.build_cell(row, subrow, column, subrow_count)
+                elif 'grouped' not in column:
+                    res += self.build_cell(row, subrow, column)
+            first_row = False
+        return res
+
+    def build_cell(self, row, subrow, column, rowspan=None):
+        res = ""
+        style = ""
+        if 'css' in column:
+            style = f"{column['css']} "
+        if rowspan:
+            style += f"rowspan='{rowspan}' "
+        if style:
+            res += f"| {style}"
+        res += f"| {column['formatter'](self, row, subrow)}\n"
+        return res
+
 
 class BaseReport(object):
     homesite_kwargs = {}
@@ -93,3 +121,28 @@ class BaseReport(object):
     def get_report_page(self):
         self.page = self.pywikibot.Page(self.homesite, self.page_name)
         self.old_page_text = self.page.text
+
+    def build_cell(self, row, column):
+        res = ""
+        if 'css' in column:
+            res += f"| {column['css']} "
+        res += f"| {column['formatter'](self, row)}\n"
+        return res
+
+    def build_row(self, row):
+        res = "|-\n"
+        for column in self.columns:
+            res += self.build_cell(row, column)
+        return res
+
+    def build_report(self, report_data):
+        page_text = "{{/header}}\n"
+        page_text += "{| class='wikitable sortable'\n"
+        page_text += "|-\n"
+        for column in self.columns:
+            page_text += f"! {column['header']}\n"
+        for row in self.get_row_iterator(report_data):
+            page_text += self.build_row(row)
+        page_text += "|}\n"
+        self.page_text = page_text
+        self.edit_summary = "Automatically updating report"

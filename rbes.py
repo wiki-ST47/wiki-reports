@@ -46,35 +46,46 @@ class rbesReport(UsesBlocksMixin, UsesWhoisMixin, BaseReport):
         res += "[https://en.wikipedia.org/wiki/Special:Block/"+user+"?wpExpiry="+str(random.randint(30,42))+"%20months&wpHardBlock=1 ~3 YEARS]"
         return res
 
+    def format_asn(self, block):
+        if block['asn']:
+            return "[https://tools.wmflabs.org/isprangefinder/hint.php?type=asn&range="+str(block['asn'])+" ASN"+str(block['asn'])+"]<br>"+block['asnname']
+        return ""
+
+    columns = [
+        {
+            'header': "IP Range",
+            'formatter': lambda self,row:"{{checkip|"+self.get_block_target(row)+"}}",
+        }, {
+            'header': "ASN",
+            'formatter': format_asn,
+        }, {
+            'header': "Blocked By",
+            'formatter': lambda self,row:f"[[Special:Contributions/{row['by']}|{row['by']}]]"
+        }, {
+            'header': "Blocked Until",
+            'css': "class='nowrap'",
+            'formatter': lambda self,row:row['expiry'],
+        }, {
+            'header': "Block Reason",
+            'formatter': lambda self,row:self.format_block_reason(row['reason']),
+        }, {
+            'header': "Reblock",
+            'css': "class='nowrap'",
+            'formatter': lambda self,row:self.build_block_links(self.get_block_target(row)),
+        }
+    ]
+
+    def get_row_iterator(self, report_data):
+        return report_data['expiringsoon']
+
     def build_report(self, report_data):
-        page_text = "{{/header}}\n"
-        page_text += "{| class='wikitable sortable'\n"
-        page_text += "|-\n"
-        page_text += "! IP Range\n"
-        page_text += "! ASN\n"
-        page_text += "! Blocked By\n"
-        page_text += "! Blocked Until\n"
-        page_text += "! Block Reason\n"
-        page_text += "! Reblock\n"
-        for block in report_data['expiringsoon']:
-            target = self.get_block_target(block)
-            page_text += "|-\n"
-            page_text += "| {{checkip|"+target+"}}\n"
-            if block['asn']:
-                page_text += "| [https://tools.wmflabs.org/isprangefinder/hint.php?type=asn&range="+str(block['asn'])+" ASN"+str(block['asn'])+"]<br>"+block['asnname']+"\n"
-            else:
-                page_text += "| \n"
-            page_text += f"| [[Special:Contributions/{block['by']}|{block['by']}]]\n"
-            page_text += f"| class='nowrap' | {block['expiry']}\n"
-            page_text += "| "+self.format_block_reason(block['reason'])+"\n"
-            page_text += "| class='nowrap' | "+self.build_block_links(target)+"\n"
-        page_text += "|}\n"
+        super().build_report(report_data)
 
         def page_text_to_range_list(text):
             return [m for m in re.findall('\{\{checkip|([0-9a-f.:/]+)\}\}', text, re.I)]
 
         old_ranges = page_text_to_range_list(self.old_page_text)
-        new_ranges = page_text_to_range_list(page_text)
+        new_ranges = page_text_to_range_list(self.page_text)
         removed_cnt = 0
         added_cnt = 0
         rmv_by = {}
@@ -107,7 +118,6 @@ class rbesReport(UsesBlocksMixin, UsesWhoisMixin, BaseReport):
             summary += ", ".join(user_entries)
             summary += ")"
 
-        self.page_text = page_text
         self.edit_summary = summary
 
 
