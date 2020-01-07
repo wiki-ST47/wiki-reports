@@ -24,7 +24,10 @@ class UsesBlocksMixin(object):
         return self.homesite.blocks()
 
     def filter_ip_blocks(self, blocklist):
-        ipblocklist = [x for x in blocklist if 'user' in x and x['userid'] == 0]
+        ipblocklist = [x for x in blocklist
+                       if 'user' in x
+                       and x['userid'] == 0
+                       and x['rangestart'] != '0.0.0.0']
         self.ipblocklist = ipblocklist
         return ipblocklist
 
@@ -58,6 +61,7 @@ class UsesBlocksMixin(object):
         report_data['ipblocklist'] = ipblocklist
         report_data['blockedranges'] = blockedranges
         report_data['coloranges'] = coloranges
+        report_data['filteredranges'] = coloranges
 
         return report_data
 
