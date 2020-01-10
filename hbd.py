@@ -58,7 +58,7 @@ class hbdReport(TwoLevelTableMixin, UsesWhoisMixin, UsesBlocksMixin, BaseReport)
         return sorted(row['blocks'], key=lambda x:self.ip2sort(x['user']))
 
     def format_iprange(self, row, subrow):
-        row['blocklog'] = [x for x in self.homesite.logevents(page="User:"+row['prefix'], logtype="block")]
+        row['blocklog'] = list(self.homesite.logevents(page="User:"+row['prefix'], logtype="block"))
         res  = "{{checkip|"+row['prefix']+"}}<br>\n"
         res += "[https://tools.wmflabs.org/isprangefinder/hint.php?type=asn&range="+str(row['asn'])+" ASN"+str(row['asn'])+"]<br>\n"
         res += str(row['asnname'])+"<br>\n"

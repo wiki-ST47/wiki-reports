@@ -5,7 +5,7 @@ from flare.tools.whoisip import WhoisLookup
 import pywikibot
 
 
-class UsesWhoisMixin(object):
+class UsesWhoisMixin():
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.whois = WhoisLookup(
@@ -13,7 +13,7 @@ class UsesWhoisMixin(object):
             'flaredata/asnames.txt',
         )
 
-class UsesBlocksMixin(object):
+class UsesBlocksMixin():
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.ipaddress = ipaddress
@@ -49,7 +49,7 @@ class UsesBlocksMixin(object):
         report_data = super().gather_data()
 
         blockiter = self.get_blocks()
-        blocklist = [x for x in blockiter]
+        blocklist = list(blockiter)
         ipblocklist = self.filter_ip_blocks(blocklist)
         blockedranges = self.filter_range_blocks(ipblocklist)
         coloranges = self.filter_relevant_blocks(blockedranges)
@@ -69,7 +69,7 @@ class UsesBlocksMixin(object):
                      .replace('-->', '--&gt;')
 
 
-class TwoLevelTableMixin(object):
+class TwoLevelTableMixin():
     def build_row(self, row):
         res = ""
         subrows = self.get_subrow_iterator(row)
@@ -98,7 +98,7 @@ class TwoLevelTableMixin(object):
         return res
 
 
-class BaseReport(object):
+class BaseReport():
     homesite_kwargs = {}
 
     def __init__(self, *args, **kwargs):

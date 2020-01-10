@@ -31,16 +31,16 @@ class osv6rReport(TwoLevelTableMixin, UsesBlocksMixin, BaseReport):
         for block in ip6blocklist:
             if block['iprange'].prefixlen <= 64:
                 ip6directblocks = {k:v for (k,v) in ip6directblocks.items()
-                                if not block['iprange'].supernet_of(k)}
+                                   if not block['iprange'].supernet_of(k)}
 
         info_rows = []
         for prefix, data in ip6directblocks.items():
             fb = min([x['timestamp'] for x in data])
-            csfb = len([x for x in site.usercontribs(userprefix=self.network_to_mw_prefix(prefix), start=fb, reverse=True)])
+            csfb = len(list(site.usercontribs(userprefix=self.network_to_mw_prefix(prefix), start=fb, reverse=True)))
             cslb = None
             if len(data) > 1:
                 lb = max([x['timestamp'] for x in data])
-                cslb = len([x for x in site.usercontribs(userprefix=self.network_to_mw_prefix(prefix), start=lb, reverse=True)])
+                cslb = len(list(site.usercontribs(userprefix=self.network_to_mw_prefix(prefix), start=lb, reverse=True)))
             if cslb == 0 or (csfb == 0 and cslb is None):
                 continue
             info_rows.append({

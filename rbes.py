@@ -77,7 +77,7 @@ class rbesReport(UsesBlocksMixin, UsesWhoisMixin, BaseReport):
         super().build_report(report_data)
 
         def page_text_to_range_list(text):
-            return [m for m in re.findall('\{\{checkip|([0-9a-f.:/]+)\}\}', text, re.I)]
+            return list(re.findall('\{\{checkip|([0-9a-f.:/]+)\}\}', text, re.I))
 
         old_ranges = page_text_to_range_list(self.old_page_text)
         new_ranges = page_text_to_range_list(self.page_text)
