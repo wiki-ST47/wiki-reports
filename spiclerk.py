@@ -67,17 +67,17 @@ for case_page in case_pages:
     elif has_case_status(case['text'], 'moreinfo'):
         case['status'] = 'moreinfo'
         case['order'] = 10
+    elif has_case_status(case['text'], 'clerk'):
+        case['status'] = 'clerk'
+        case['order'] = 11
     elif has_case_status(case['text'], 'admin'):
         case['status'] = 'admin'
-        case['order'] = 11
-    elif has_case_status(case['text'], 'cuhold'):
-        case['status'] = 'CUhold'
         case['order'] = 12
     elif has_case_status(case['text'], 'hold'):
         case['status'] = 'hold'
         case['order'] = 13
-    elif has_case_status(case['text'], 'clerk'):
-        case['status'] = 'clerk'
+    elif has_case_status(case['text'], 'cuhold'):
+        case['status'] = 'CUhold'
         case['order'] = 14
     elif has_case_status(case['text'], 'closed?'):
         case['status'] = 'close'
