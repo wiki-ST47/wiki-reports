@@ -1,15 +1,26 @@
-import datetime
+from datetime import datetime, timedelta
 import pywikibot
 import re
 import sys
 
+
+def parse_mw_ts(timestamp):
+    return datetime.strptime(str(timestamp), '%Y-%m-%dT%H:%M:%SZ')
+
+allowed_to_run = False
+taking_over_clerking = False
+latest_case_edit = None
 
 site = pywikibot.Site()
 site.login()
 
 output_page = pywikibot.Page(site, 'Wikipedia:Sockpuppet investigations/Cases/Overview')
 latest_rev = output_page.latest_revision
-if latest_rev['user'] != 'ST47Bot':
+if latest_rev['user'] == 'ST47Bot':
+    allowed_to_run = True
+elif parse_mw_ts(latest_rev['timestamp']) < (datetime.now() - timedelta(minutes=30)):
+    print("Last edit more than 30 minutes ago, continuing...")
+else:
     print("Another user has edited the page!")
     sys.exit()
 
@@ -28,10 +39,22 @@ for case_page in case_pages:
     case['page'] = case_page
     case['casename'] = case_page.title().split('/')[-1]
     case['text'] = case_page.text
+    timestamps = re.findall('\d\d:\d\d, \d\d? (?:January|February|March|April|May|June|July|August|September|October|November|December) \d{4} \(UTC\)', case['text'])
+    timestamps = [datetime.strptime(x, '%H:%M, %d %B %Y (UTC)') for x in timestamps]
+    case['filed'] = min(timestamps)
     case['revisions'] = list(case_page.revisions())
     case['latest_rev'] = case['revisions'][0]
+    case['latest_rev_ts'] = parse_mw_ts(case['revisions'][0]['timestamp'])
+    if latest_case_edit is None or case['latest_rev_ts'] > latest_case_edit:
+        latest_case_edit = case['latest_rev_ts']
     try:
-        case['latest_cu_edit'] = [x for x in case['revisions'] if x['user'] in cu_clerk_names][0]
+        latest_cu_edit = [x for x in case['revisions'] if x['user'] in cu_clerk_names][0]
+        latest_cu_edit_ts = parse_mw_ts(latest_cu_edit['timestamp'])
+        if latest_cu_edit_ts >= case['filed']:
+            case['latest_cu_edit'] = [x for x in case['revisions'] if x['user'] in cu_clerk_names][0]
+            case['latest_cu_edit_ts'] = parse_mw_ts(case['latest_cu_edit']['timestamp'])
+        else:
+            case['latest_cu_edit'] = None
     except IndexError:
         case['latest_cu_edit'] = None
     def has_case_status(text, status):
@@ -86,31 +109,36 @@ for case_page in case_pages:
         case['status'] = 'error'
         case['order'] = 16
 
-    timestamps = re.findall('\d\d:\d\d, \d\d? (?:January|February|March|April|May|June|July|August|September|October|November|December) \d{4} \(UTC\)', case['text'])
-    timestamps = [datetime.datetime.strptime(x, '%H:%M, %d %B %Y (UTC)') for x in timestamps]
-    case['filed'] = min(timestamps)
     caselist.append(case)
 
-page_text  = "<!-- This bot (ST47Bot) will stop clerking as soon as any other user edits this page.  -->\n"
+if not allowed_to_run and latest_case_edit < (datetime.now() - timedelta(minutes=30)):
+    print("Update is more than 30 minutes overdue, bot taking over clerk responsibilities.")
+    allowed_to_run = True
+    taking_over_clerking = True
+
+if not allowed_to_run:
+    print("Bot is still not allowed to run, exiting.")
+    sys.exit()
+
+page_text  = "<!-- This bot (ST47Bot) has taken over clerking because an update to this page was more than 30 minutes overdue. It will stop clerking as soon as any other user edits this page.  -->\n"
 page_text += "{{SPIstatusheader}}\n"
 for case in sorted(caselist, key=lambda x:(x['order'], x['filed'])):
     def ftime(time):
         return time.strftime('%Y-%m-%d %H:%M')
-    def fts(timestamp):
-        time = datetime.datetime.strptime(str(timestamp), '%Y-%m-%dT%H:%M:%SZ')
-        return time.strftime('%Y-%m-%d %H:%M')
     page_text += "{{"+f"SPIstatusentry|{case['casename']}|{case['status']}|{ftime(case['filed'])}"\
-                 f"|{case['latest_rev']['user']}|{fts(case['latest_rev']['timestamp'])}"
+                 f"|{case['latest_rev']['user']}|{ftime(case['latest_rev_ts'])}"
     if case['latest_cu_edit']:
-        page_text += f"|{case['latest_cu_edit']['user']}|{fts(case['latest_cu_edit']['timestamp'])}"
+        page_text += f"|{case['latest_cu_edit']['user']}|{ftime(case['latest_cu_edit_ts'])}"
     else:
         page_text += "||"
     page_text += "}}\n"
 page_text += "|}\n"
 
+print(page_text)
+
 output_page = pywikibot.Page(site, 'Wikipedia:Sockpuppet investigations/Cases/Overview')
 latest_rev = output_page.latest_revision
-if latest_rev['user'] != 'ST47Bot':
+if not taking_over_clerking and latest_rev['user'] != 'ST47Bot':
     print("Another user has edited the page!")
     sys.exit()
 output_page.text = page_text
