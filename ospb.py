@@ -61,7 +61,7 @@ class ospbReport(UsesBlocksMixin, BaseReport):
 
     def format_reblock(self, row):
         reason = f"Widening block by [[User:{row['block']['by']}]] on [[Special:Contributions/{row['block']['user']}]] due to ongoing disruption. Original block was for: {row['block']['reason']}"
-        return f"[https://en.wikipedia.org/wiki/Special:Block/{row['block']['user']}?wpExpiry={quote_plus(row['block']['expiry'])}&wpReason=other&wpReason-other={quote_plus(reason)} RE-BLOCK]"
+        return f"[https://en.wikipedia.org/wiki/Special:Block/{row['block']['user'].replace(' ', '_')}?wpExpiry={quote_plus(row['block']['expiry'])}&wpReason=other&wpReason-other={quote_plus(reason)} RE-BLOCK]"
 
     columns = [
         {
