@@ -49,12 +49,6 @@ for case_page in case_pages:
     elif has_case_status(case['text'], 'cu|checkuser|curequest|request'):
         case['status'] = 'CUrequest'
         case['order'] = 4
-    elif has_case_status(case['text'], 'checked|completed'):
-        case['status'] = 'checked'
-        case['order'] = 5
-    elif has_case_status(case['text'], 'open|'):
-        case['status'] = 'open'
-        case['order'] = 6
     elif has_case_status(case['text'], 'cudeclined?'):
         case['status'] = 'CUdeclined'
         case['order'] = 7
@@ -73,6 +67,12 @@ for case_page in case_pages:
     elif has_case_status(case['text'], 'admin'):
         case['status'] = 'admin'
         case['order'] = 12
+    elif has_case_status(case['text'], 'open|'):
+        case['status'] = 'open'
+        case['order'] = 6
+    elif has_case_status(case['text'], 'checked|completed'):
+        case['status'] = 'checked'
+        case['order'] = 5
     elif has_case_status(case['text'], 'hold'):
         case['status'] = 'hold'
         case['order'] = 13
