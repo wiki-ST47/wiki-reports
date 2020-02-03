@@ -1,11 +1,13 @@
 from datetime import datetime, timedelta
 import pywikibot
+import pytz
 import re
 import sys
 
 
 def parse_mw_ts(timestamp):
-    return datetime.strptime(str(timestamp), '%Y-%m-%dT%H:%M:%SZ')
+    time = datetime.strptime(str(timestamp), '%Y-%m-%dT%H:%M:%SZ')
+    return pytz.utc.localize(time)
 
 allowed_to_run = False
 taking_over_clerking = False
@@ -18,7 +20,7 @@ output_page = pywikibot.Page(site, 'Wikipedia:Sockpuppet investigations/Cases/Ov
 latest_rev = output_page.latest_revision
 if latest_rev['user'] == 'ST47Bot':
     allowed_to_run = True
-elif parse_mw_ts(latest_rev['timestamp']) < (datetime.now() - timedelta(minutes=30)):
+elif parse_mw_ts(latest_rev['timestamp']) < (datetime.now(pytz.utc) - timedelta(minutes=30)):
     print("Last edit more than 30 minutes ago, continuing...")
 else:
     print("Another user has edited the page!")
@@ -40,7 +42,7 @@ for case_page in case_pages:
     case['casename'] = case_page.title().split('/')[-1]
     case['text'] = case_page.text
     timestamps = re.findall('\d\d:\d\d, \d\d? (?:January|February|March|April|May|June|July|August|September|October|November|December) \d{4} \(UTC\)', case['text'])
-    timestamps = [datetime.strptime(x, '%H:%M, %d %B %Y (UTC)') for x in timestamps]
+    timestamps = [pytz.utc.localize(datetime.strptime(x, '%H:%M, %d %B %Y (UTC)')) for x in timestamps]
     case['filed'] = min(timestamps)
     case['revisions'] = list(case_page.revisions())
     case['latest_rev'] = case['revisions'][0]
@@ -111,7 +113,7 @@ for case_page in case_pages:
 
     caselist.append(case)
 
-if not allowed_to_run and latest_case_edit < (datetime.now() - timedelta(minutes=30)):
+if not allowed_to_run and latest_case_edit < (datetime.now(pytz.utc) - timedelta(minutes=30)):
     print("Update is more than 30 minutes overdue, bot taking over clerk responsibilities.")
     allowed_to_run = True
     taking_over_clerking = True
