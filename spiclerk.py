@@ -11,16 +11,19 @@ def parse_mw_ts(timestamp):
 
 allowed_to_run = False
 taking_over_clerking = False
+first_overdue_case_edit = None
 latest_case_edit = None
+update_due = False
 
 site = pywikibot.Site()
 site.login()
 
 output_page = pywikibot.Page(site, 'Wikipedia:Sockpuppet investigations/Cases/Overview')
 latest_rev = output_page.latest_revision
+latest_bot_edit = parse_mw_ts(latest_rev['timestamp'])
 if latest_rev['user'] == 'ST47Bot':
     allowed_to_run = True
-elif parse_mw_ts(latest_rev['timestamp']) < (datetime.now(pytz.utc) - timedelta(minutes=30)):
+elif latest_bot_edit < (datetime.now(pytz.utc) - timedelta(minutes=30)):
     print("Last edit more than 30 minutes ago, continuing...")
 else:
     print("Another user has edited the page!")
@@ -47,6 +50,13 @@ for case_page in case_pages:
     case['revisions'] = list(case_page.revisions())
     case['latest_rev'] = case['revisions'][0]
     case['latest_rev_ts'] = parse_mw_ts(case['revisions'][0]['timestamp'])
+    if case['latest_rev_ts'] and case['latest_rev_ts'] > latest_bot_edit:
+        update_due = True
+        if first_overdue_case_edit is None or case['latest_rev_ts'] < first_overdue_case_edit:
+            first_overdue_case_edit = case['latest_rev_ts']
+        if latest_case_edit is None or case['latest_rev_ts'] > latest_case_edit:
+            latest_case_edit = case['latest_rev_ts']
+
     if latest_case_edit is None or case['latest_rev_ts'] > latest_case_edit:
         latest_case_edit = case['latest_rev_ts']
     try:
@@ -113,10 +123,16 @@ for case_page in case_pages:
 
     caselist.append(case)
 
-if not allowed_to_run and latest_case_edit < (datetime.now(pytz.utc) - timedelta(minutes=30)):
+if not allowed_to_run and\
+   update_due and\
+   first_overdue_case_edit > (latest_bot_edit + timedelta(minutes=30)):
     print("Update is more than 30 minutes overdue, bot taking over clerk responsibilities.")
     allowed_to_run = True
     taking_over_clerking = True
+
+if not update_due:
+    print("Update is not required, exiting.")
+    sys.exit()
 
 if not allowed_to_run:
     print("Bot is still not allowed to run, exiting.")
@@ -136,12 +152,12 @@ for case in sorted(caselist, key=lambda x:(x['order'], x['filed'])):
     page_text += "}}\n"
 page_text += "|}\n"
 
-print(page_text)
-
 output_page = pywikibot.Page(site, 'Wikipedia:Sockpuppet investigations/Cases/Overview')
 latest_rev = output_page.latest_revision
+latest_bot_edit = parse_mw_ts(latest_rev['timestamp'])
 if not taking_over_clerking and latest_rev['user'] != 'ST47Bot':
     print("Another user has edited the page!")
     sys.exit()
+output_page = pywikibot.Page(site, 'User:ST47/spiclerk') ## TEMP
 output_page.text = page_text
 output_page.save(summary=f"Bot clerking SPI case list ({len(caselist)} open cases)", minor=True)
