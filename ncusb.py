@@ -12,7 +12,7 @@ class sbpReport(UsesBlocksMixin, BaseReport):
         lcu_usernames = [x['name'] for x in lcu]
 
         blocklist = report_data['blocklist']
-        threshold = (datetime.now() - timedelta(days=15)).strftime("%Y-%m-X")
+        threshold = (datetime.now() - timedelta(days=15)).strftime("%Y-%m-%D")
         interestingblocks = [
             x for x in blocklist
             if 'user' in x and 'userid' in x and x['userid']

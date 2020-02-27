@@ -39,6 +39,10 @@ class sbpReport(UsesWhoisMixin, UsesBlocksMixin, BaseReport):
             'header': "Blocked By",
             'formatter': lambda self,row: f"[[Special:Contributions/{row['by']}|{row['by']}]]",
         }, {
+            'header': "Blocked At",
+            'css': "class='nowrap'",
+            'formatter': lambda self,row: row['timestamp'],
+        }, {
             'header': "Blocked Until",
             'css': "class='nowrap'",
             'formatter': lambda self,row: row['expiry'],

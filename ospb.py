@@ -28,18 +28,21 @@ class ospbReport(UsesBlocksMixin, BaseReport):
 
         info_rows = []
         for block in partialblocklist:
-            csb = len(list(site.usercontribs(user=block['user'], start=block['timestamp'], reverse=True)))
-            info_rows.append({
+            entry = {
                 'block': block,
-                'csb': csb,
-            })
+            }
+            if 'rangestart' not in block or block['rangestart'] == block['rangeend']:
+                csb = len(list(site.usercontribs(user=block['user'], start=block['timestamp'], reverse=True)))
+                entry['csb'] = csb
+            info_rows.append(entry)
 
         report_data['info_rows'] = info_rows
         return report_data
 
     def format_target(self, row):
         res  = f"[[Special:Contributions/{row['block']['user']}|{row['block']['user']}]]<br>\n"
-        res += f"{row['csb']} contribs since blocked<br>"
+        if 'csb' in row:
+            res += f"{row['csb']} contribs since blocked<br>"
         return res
 
     def format_conditions(self, row):
