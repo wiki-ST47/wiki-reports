@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 import random
 import re
+from urllib.parse import quote_plus
 from basereport import BaseReport, UsesWhoisMixin, UsesBlocksMixin
 
 
@@ -24,7 +25,7 @@ class rbesReport(UsesBlocksMixin, UsesWhoisMixin, BaseReport):
                 x['ipcount'] = 2 ** (64 - (int(self.get_block_target(x).split('/')[1])))
                 enrichedv6coloranges.append(x)
 
-        threshold = (datetime.now() + timedelta(days=20)).strftime("%Y-%m-X")
+        threshold = (datetime.now() + timedelta(days=100)).strftime("%Y-%m-X")
         expiringsoon = [x for x in coloranges if x['expiry'] <= threshold and x['ipcount'] > 1]
         expiringsoon.sort(key=lambda x:x['expiry'])
 
@@ -35,11 +36,20 @@ class rbesReport(UsesBlocksMixin, UsesWhoisMixin, BaseReport):
     def get_block_target(self, block):
         return block['user']
 
-    def build_block_links(self, user):
+    def build_block_links(self, user, reason):
         random.seed(user)
-        res  = "[https://en.wikipedia.org/wiki/Special:Block/"+user+"?wpExpiry="+str(random.randint(10,14))+"%20months&wpHardBlock=1 ~1 YEAR]<br>"
-        res += "[https://en.wikipedia.org/wiki/Special:Block/"+user+"?wpExpiry="+str(random.randint(30,42))+"%20months&wpHardBlock=1 ~3 YEARS]"
+        res  = "[https://en.wikipedia.org/wiki/Special:Block/"+user+"?wpExpiry="+str(random.randint(10,14))+"%20months&wpHardBlock=1&wpReason=other&wpReason-other="+quote_plus(reason)+" ~1 YEAR]<br>"
+        res += "[https://en.wikipedia.org/wiki/Special:Block/"+user+"?wpExpiry="+str(random.randint(30,42))+"%20months&wpHardBlock=1&wpReason=other&wpReason-other="+quote_plus(reason)+" ~3 YEARS]"
         return res
+
+    def build_row(self, row):
+        if row['asn']:
+            print(f"{self.get_block_target(row)} - AS{row['asn']} {row['asnname']} -> "
+                f"{row['reason']}")
+#        else:
+#            print(f"{self.get_block_target(row)} - AS -> "
+#                f"{row['reason']}")
+        return super().build_row(row)
 
     def format_asn(self, block):
         if block['asn']:
@@ -66,7 +76,7 @@ class rbesReport(UsesBlocksMixin, UsesWhoisMixin, BaseReport):
         }, {
             'header': "Reblock",
             'css': "class='nowrap'",
-            'formatter': lambda self,row:self.build_block_links(self.get_block_target(row)),
+            'formatter': lambda self,row:self.build_block_links(self.get_block_target(row), row['reason']),
         }
     ]
 

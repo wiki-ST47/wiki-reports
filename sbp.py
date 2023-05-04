@@ -11,7 +11,9 @@ class sbpReport(UsesWhoisMixin, UsesBlocksMixin, BaseReport):
         interestingblocks = [
             x for x in ipblocklist
             if re.search('proxy|proxies|webhost', x['reason'], flags=re.I)
-            and 'anononly' in x]
+            and 'anononly' in x
+            and x['by'] != 'ST47ProxyBot'
+        ]
 
         for x in interestingblocks:
             x['asn'] = self.whois.get_asn(x['rangestart'])

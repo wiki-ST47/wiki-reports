@@ -18,7 +18,7 @@ class grbesReport(rbesReport):
     def filter_relevant_blocks(self, blocklist):
         return blocklist
 
-    def build_block_links(self, user):
+    def build_block_links(self, user, reason):
         random.seed(user)
         res  = "[https://meta.wikimedia.org/wiki/Special:GlobalBlock/"+user+"?wpExpiry="+str(random.randint(10,14))+"%20months ~1 YEAR]<br>"
         res += "[https://meta.wikimedia.org/wiki/Special:GlobalBlock/"+user+"?wpExpiry="+str(random.randint(30,42))+"%20months ~3 YEARS]"

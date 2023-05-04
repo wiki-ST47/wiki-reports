@@ -26,6 +26,8 @@ class UsesBlocksMixin():
                        if 'user' in x
                        and x['userid'] == 0
                        and x['rangestart'] != '0.0.0.0']
+        for x in ipblocklist:
+            x['ip_network'] = self.ipaddress.ip_network(x['user'])
         self.ipblocklist = ipblocklist
         return ipblocklist
 
@@ -42,8 +44,8 @@ class UsesBlocksMixin():
         prefixobj = self.ipaddress.ip_network(prefix)
         return [x for x in self.ipblocklist
                 if x['rangestart'] and x['rangestart'] != '0.0.0.0'
-                and prefixobj.version == self.ipaddress.ip_network(x['user']).version
-                and prefixobj.subnet_of(self.ipaddress.ip_network(x['user']))]
+                and prefixobj.version == x['ip_network'].version
+                and prefixobj.subnet_of(x['ip_network'])]
 
     def gather_data(self):
         report_data = super().gather_data()
@@ -86,6 +88,8 @@ class TwoLevelTableMixin():
         return res
 
     def build_cell(self, row, subrow, column, rowspan=None):
+        if 'no_content' in column:
+            return ""
         res = ""
         style = ""
         if 'css' in column:
@@ -105,6 +109,8 @@ class BaseReport():
         self.pywikibot = pywikibot
         self.homesite = self.pywikibot.Site(**self.homesite_kwargs)
         self.homesite.login()
+        self.meta = self.pywikibot.Site(fam='meta', code='meta')
+        self.meta.login()
 
     def gather_data(self):
         return {}
@@ -124,6 +130,8 @@ class BaseReport():
         self.old_page_text = self.page.text
 
     def build_cell(self, row, column):
+        if 'no_content' in column:
+            return ""
         res = ""
         if 'css' in column:
             res += f"| {column['css']} "

@@ -55,7 +55,8 @@ class hbdReport(TwoLevelTableMixin, UsesWhoisMixin, UsesBlocksMixin, BaseReport)
         return sorted(report_data['major_prefixes'].values(), key=lambda x:self.ip2sort(x['prefix'].split('/')[0]))
 
     def get_subrow_iterator(self, row):
-        return sorted(row['blocks'], key=lambda x:self.ip2sort(x['user']))
+#        return sorted(row['blocks'], key=lambda x:self.ip2sort(x['user']))
+        return list(sorted(row['blocks'], key=lambda x:self.ip2sort(x['user'])))[0:5]
 
     def format_iprange(self, row, subrow):
         row['blocklog'] = list(self.homesite.logevents(page="User:"+row['prefix'], logtype="block"))
